@@ -137,7 +137,7 @@ class CourseCollecter:
             print(msg)
 
     def log_error(self, msg):
-        sys.stderr.print(msg)
+        sys.stderr.write(msg)
 
 # -----------------------------------------------------------------------------
 # Helper functions
