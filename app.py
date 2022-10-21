@@ -69,19 +69,9 @@ def collect_and_save_to_csv(category):
     url = f'/browse/{category}'
     set_processing_url(category, url)
     collect_from_category.delay(category, url)
-
-    # wait while all urls are processed
-    timeout = 30 * 60 # 30 min timeout
     start_time = time()
-    while has_unfinished_urls(category):
-        sleep(1)
-        if time() - start_time > timeout:
-            break
-
-    courses = get_courses(category)
-    log(f"Finished. Collected {len(courses)} courses")
-    csv_path = path_to_csv(category)
-    save_to_csv(courses, csv_path)
+    timeout = 30 * 60 # 30 min timeout
+    try_to_save_to_csv.apply_async((category, start_time, timeout), countdown=2)
 
 @celery.task
 def collect_from_category(category, url):
@@ -161,6 +151,18 @@ def get_course_data(soup):
     except IndexError as e:
         log_error(f"ERROR: Can't extract data about the course: {e}")
         return None
+
+@celery.task
+def try_to_save_to_csv(category, start_time, timeout):
+    if has_unfinished_urls(category):
+        if time() - start_time < timeout:
+            try_to_save_to_csv.apply_async((category, start_time, timeout), countdown=2)
+        return
+
+    courses = get_courses(category)
+    log(f"Finished. Collected {len(courses)} courses")
+    csv_path = path_to_csv(category)
+    save_to_csv(courses, csv_path)
 
 @celery.task
 def save_to_csv(courses, filepath):
