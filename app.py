@@ -82,6 +82,8 @@ def collect_from_category(category, url):
     set_finished_url(category, url)
 
 def parse_link(category, link_url):
+    if already_visited(category, link_url):
+        return
     url_parts = link_url.split('/')
     if len(url_parts) < 3:
         return
