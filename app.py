@@ -71,7 +71,7 @@ def collect_and_save_to_csv(category):
     collect_from_category.delay(category, url)
 
     # wait while all urls are processed
-    timeout = 5 * 60 # 5 min timeout
+    timeout = 30 * 60 # 30 min timeout
     start_time = time()
     while has_unfinished_urls(category):
         sleep(1)
